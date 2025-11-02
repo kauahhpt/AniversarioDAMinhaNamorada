@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Universo de Nós Dois — Beatriz</title>
+
+<!-- Fonte -->
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- Dependências via CDN -->
+<script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+<script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
+
+<style>
+:root{
+  --bg:#05020a;
+  font-family:"Quicksand", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+html,body{height:100%;margin:0;background: radial-gradient(ellipse at 20% 10%, rgba(58,48,99,0.18), transparent 8%), var(--bg); color:#fff}
+#app{position:fixed;inset:0;display:flex;align-items:stretch;justify-content:stretch;overflow:hidden}
+#canvas-wrap{flex:1;position:relative}
+canvas{display:block}
+
+.ui-top{position:absolute;left:20px;top:20px;z-index:60;display:flex;flex-direction:column;gap:10px;pointer-events:auto}
+.brand{background:rgba(255,255,255,0.03);backdrop-filter:blur(6px);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:white}
+.brand h1{margin:0;font-size:14px;font-weight:600}
+.brand p{margin:0;font-size:11px;opacity:0.95}
+
+.footer{position:absolute;right:20px;bottom:20px;z-index:60;background:rgba(255,255,255,0.03);padding:10px 14px;border-radius:12px}
+.hint{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;z-index:60;font-size:13px;opacity:0.9;background:rgba(0,0,0,0.2);padding:8px 12px;border-radius:12px}
+
+.modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.98);min-width:320px;max-width:82vw;padding:18px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));z-index:80;box-shadow:0 10px 40px rgba(0,0,0,0.6);display:none;backdrop-filter:blur(6px)}
+.modal.show{display:block;animation:pop .38s cubic-bezier(.2,.9,.3,1)}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.modal h2{margin:0 0 8px 0;font-size:18px}
+.modal p{margin:0 0 12px 0;color:rgba(255,255,255,0.95);line-height:1.35}
+.modal .meta{font-size:12px;opacity:0.85;margin-bottom:12px}
+
+@media (max-width:720px){
+  .ui-top{left:10px;top:10px}
+}
+.modal .btn.ghost {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3); /* mais visível */
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 10px;
+  transition: 0.2s;
+}
+
+.modal .btn.ghost:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.6);
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="canvas-wrap"></div>
+
+  <div class="ui-top">
+    <div class="brand">
+      <div class="logo">❤</div>
+      <div>
+        <h1 id="site-title">Universo de Beatriz</h1>
+        <p id="subtitle">Clique nas estrelas — cada uma guarda um momento</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal" role="dialog" aria-modal="true">
+    <h2 id="modal-title">Título</h2>
+    <div class="meta" id="modal-meta">Memória</div>
+    <p id="modal-text">Texto</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+    <button id="closeModal" class="btn ghost small">Fechar</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div style="font-size:13px">✨ Dica: movimente o mouse para explorar — toque para interagir</div>
+    <div style="font-size:13px">✨são 8 estrelas caso não apareçam as 8 recarregue a pagina</div>
+  </div>
+
+  <div class="hint">Clique em uma estrela para abrir a lembrança</div>
+</div>
+
+<script>
+/* -------------------- CONFIGURAÇÃO INICIAL -------------------- */
+const initialStars = [
+  { id: 's-1', title: 'Nosso primeiro encontro', text: 'Com nossos amigos naquele parque foi lá a vem em que tivemos o nosso primeiro encontro' },
+  { id: 's-2', title: 'Primeira ida a praia sozinhos', text: 'Naquele dia o sol nasceu com a gente, café na areia, riadas e o surfe aquela foto eternizou nosso amor' },
+  { id: 's-3', title: 'Nossa primeira viagem', text: 'Entre os mergulhos, as risadas e o balanço da rede e a luz da lua eu não conseguia para de pensar em vc' },
+  { id: 's-4', title: 'Você e seu jeito', text: 'Seu jeitinho meigo aquece meu coração, mas aquilo que mais me alegra é sua inocencia.' },
+  { id: 's-5', title: 'Nosso Primeiro Beijo', text: 'Nosso selinho no parque, tímido mas cheio de emoção, vai sempre ser o nosso momento.' },
+  { id: 's-6', title: 'Nossos planos juntos', text: 'Sonhos compartilhados, risos e um futuro que quero construir ao seu lado.' },
+  { id: 's-7', title: 'Você me apresentando a sua familia', text: 'Chegar perto da sua família foi tenso, mas no fim, só restou a sensação de estar em casa   ' },
+  { id: 's-8', title: 'Nossa primeira vez', text: 'O momento em que nossas almas se tocaram, e percebi que de fato você era pra toda vida.' }
+];
+
+const DEFAULT_PLANET_NAME = 'Beatriz';
+let savedStars = initialStars.slice(); // já garante que sempre usemos as 8 estrelas
+
+/* -------------------- THREE.JS SETUP -------------------- */
+const container = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x05020a, 0.015);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(0, 0, 22);
+
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+container.appendChild(renderer.domElement);
+
+window.addEventListener('resize', ()=> {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* lighting */
+const hemi = new THREE.HemisphereLight(0xaaaaee, 0x080820, 0.6);
+scene.add(hemi);
+const point = new THREE.PointLight(0xfff4cc, 0.8);
+point.position.set(5,5,5);
+scene.add(point);
+
+/* background particles */
+const particleCount = 600;
+const particlesGeo = new THREE.BufferGeometry();
+const positions = new Float32Array(particleCount * 3);
+for(let i=0;i<particleCount;i++){
+  positions[i*3] = THREE.MathUtils.randFloatSpread(80);
+  positions[i*3+1] = THREE.MathUtils.randFloatSpread(40);
+  positions[i*3+2] = -Math.abs(THREE.MathUtils.randFloatSpread(80));
+}
+particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const particlesMat = new THREE.PointsMaterial({size:0.06, transparent:true, opacity:0.95});
+const particles = new THREE.Points(particlesGeo, particlesMat);
+scene.add(particles);
+
+/* -------------------- PLANETA -------------------- */
+function createPlanet(name){
+  const group = new THREE.Group();
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  const g = ctx.createLinearGradient(0,0,512,512);
+  g.addColorStop(0, '#6d28d9'); g.addColorStop(0.5, '#c084fc'); g.addColorStop(1, '#fb7185');
+  ctx.fillStyle = g; ctx.fillRect(0,0,512,512);
+  ctx.globalCompositeOperation = 'lighter';
+  for(let i=0;i<6;i++){
+    ctx.beginPath();
+    ctx.arc(256,256, 80+ i*30, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,255,255,'+ (0.02 + i*0.02) +')';
+    ctx.lineWidth = 10; ctx.stroke();
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+
+  const sphereGeo = new THREE.SphereGeometry(3.4, 48, 48);
+  const sphereMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.12, emissiveIntensity:0.18 });
+  const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+  group.add(sphere);
+
+  const auraGeo = new THREE.SphereGeometry(3.9, 32, 32);
+  const auraMat = new THREE.MeshBasicMaterial({color:0xffe3f0, transparent:true, opacity:0.12, blending: THREE.AdditiveBlending});
+  const aura = new THREE.Mesh(auraGeo, auraMat);
+  group.add(aura);
+
+  const ringGeo = new THREE.TorusGeometry(4.8, 0.08, 16, 120);
+  const ringMat = new THREE.MeshBasicMaterial({color:0xffb4d6, transparent:true, opacity:0.18});
+  const ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = -0.55;
+  group.add(ring);
+
+  group.userData = { ring, aura, sphere };
+  scene.add(group);
+  return group;
+}
+const planetGroup = createPlanet(DEFAULT_PLANET_NAME);
+
+/* -------------------- GRUPO DE ESTRELAS -------------------- */
+const starsGroup = new THREE.Group();
+scene.add(starsGroup);
+
+/* -------------------- FUNÇÕES DE ESTRELA 3D -------------------- */
+function randomStarPos(){
+  const radius = THREE.MathUtils.randFloat(5, 14); // mais afastadas
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.random() * Math.PI - Math.PI/2;
+  const x = radius * Math.cos(phi) * Math.cos(theta);
+  const y = radius * Math.sin(phi);
+  const z = -Math.abs(radius * Math.cos(phi) * Math.sin(theta));
+  return [x, y, z];
+}
+
+function createStarMesh(star){
+  const radius = 0.18;
+  const spikes = 5;
+  const outerRadius = radius;
+  const innerRadius = radius * 0.5;
+
+  const shape = new THREE.Shape();
+  let rot = Math.PI / 2 * 3;
+  shape.moveTo(0, -outerRadius);
+  for (let i=0; i<spikes; i++){
+    let x = Math.cos(rot)*outerRadius;
+    let y = Math.sin(rot)*outerRadius;
+    shape.lineTo(x,y);
+    rot += Math.PI/spikes;
+    x = Math.cos(rot)*innerRadius;
+    y = Math.sin(rot)*innerRadius;
+    shape.lineTo(x,y);
+    rot += Math.PI/spikes;
+  }
+  shape.closePath();
+
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 });
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffee, emissive: 0xffffcc, roughness: 0.3, metalness: 0.2 });
+  const mesh = new THREE.Mesh(geo, mat);
+
+  const scale = THREE.MathUtils.randFloat(0.7, 1.3);
+  mesh.scale.set(scale, scale, scale);
+
+  const [x,y,z] = randomStarPos();
+  mesh.position.set(x,y,z);
+
+  mesh.userData = { id: star.id, title: star.title, text: star.text };
+  starsGroup.add(mesh);
+  return mesh;
+}
+
+/* -------------------- CARREGAR ESTRELAS -------------------- */
+for(const s of savedStars){
+  createStarMesh(s);
+}
+
+/* ---------- INTERAÇÃO, MODAL E UI ---------- */
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modal-title');
+const modalText = document.getElementById('modal-text');
+const modalMeta = document.getElementById('modal-meta');
+const speakBtn = document.getElementById('speakBtn');
+const closeModal = document.getElementById('closeModal');
+
+function openModal(star){
+  modalTitle.textContent = star.userData.title;
+  modalText.textContent = star.userData.text;
+  modalMeta.textContent = '💫 Memória';
+  modal.classList.add('show');
+}
+
+function closeModalFn(){ modal.classList.remove('show'); }
+closeModal.addEventListener('click', closeModalFn);
+
+window.addEventListener('pointerdown', (event)=>{
+  pointer.x = (event.clientX/window.innerWidth)*2-1;
+  pointer.y = -(event.clientY/window.innerHeight)*2+1;
+  raycaster.setFromCamera(pointer, camera);
+  const intersects = raycaster.intersectObjects(starsGroup.children);
+  if(intersects.length>0){
+    const obj = intersects[0].object;
+    if(obj.userData?.id) openModal(obj);
+  }
+});
+
+/* --------- MOVIMENTO PELO MOUSE ---------- */
+let targetX = 0;
+let targetY = 0;
+const windowHalfX = window.innerWidth/2;
+const windowHalfY = window.innerHeight/2;
+
+document.addEventListener('mousemove', (event)=>{
+    targetX = (event.clientX - windowHalfX) * 0.001;
+    targetY = (event.clientY - windowHalfY) * 0.001;
+});
+
+/* ---------- ANIMAÇÃO ---------- */
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Rotação do planeta com base no mouse
+    planetGroup.rotation.y += 0.002 + (targetX - planetGroup.rotation.y) * 0.05;
+    planetGroup.rotation.x += (targetY - planetGroup.rotation.x) * 0.05;
+
+    // Rotação geral da cena para efeito sutil
+    scene.rotation.y += 0.0005;
+
+    // Efeito de brilho e opacidade nas estrelas
+    const t = performance.now() * 0.001;
+    for (const s of starsGroup.children) {
+        const f = 0.9 + Math.sin(t * 2 + s.position.x * 0.3) * 0.12;
+        s.material.emissiveIntensity = 0.22 * f;
+        if (s.children[0] && s.children[0].material) {
+            s.children[0].material.opacity = 0.6 + Math.abs(Math.sin(t * 2 + s.position.y)) * 0.4;
+        }
+    }
+
+    // ---------- TELETRANSPORTE DAS PARTÍCULAS DE FUNDO ----------
+    const positionsArray = particlesGeo.attributes.position.array;
+    const boundX = 50, boundY = 25, boundZ = 80; // limites do "universo"
+
+    for (let i = 0; i < particleCount; i++) {
+        let x = positionsArray[i * 3];
+        let y = positionsArray[i * 3 + 1];
+        let z = positionsArray[i * 3 + 2];
+
+        if (x > boundX) positionsArray[i * 3] = -boundX;
+        else if (x < -boundX) positionsArray[i * 3] = boundX;
+
+        if (y > boundY) positionsArray[i * 3 + 1] = -boundY;
+        else if (y < -boundY) positionsArray[i * 3 + 1] = boundY;
+
+        if (z > boundZ) positionsArray[i * 3 + 2] = -boundZ;
+        else if (z < -boundZ) positionsArray[i * 3 + 2] = boundZ;
+    }
+    particlesGeo.attributes.position.needsUpdate = true;
+
+    renderer.render(scene, camera);
+}
+animate();
+
+
+</script>
+<!-- Música de fundo -->
+<audio id="bg-music" src="musica.mp3" autoplay loop></audio>
+
+<script>
+  const bgMusic = document.getElementById("bg-music");
+  bgMusic.volume = 0.75; // controla o volume inicial (0.0 a 1.0)
+
+  // Em navegadores que bloqueiam autoplay, o som inicia após o primeiro clique
+  window.addEventListener('click', () => {
+    if (bgMusic.paused) {
+      bgMusic.play().catch(err => console.warn('Autoplay bloqueado:', err));
+    }
+  });
+
+  // Também tenta iniciar assim que a página estiver pronta
+  window.addEventListener('load', () => {
+    bgMusic.play().catch(() => {}); 
+  });
+</script>
+
+</body>
+</html>
