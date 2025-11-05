@@ -175,6 +175,24 @@
     .presentes{ gap:20px; }
     .presente{ width:110px; height:110px; }
   }
+   .proxima {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 40;
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: #111;
+    text-decoration: none;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+    font-weight:600;
+    transition: transform .18s;
+  }
+
+  .proxima:hover {
+    transform: translateY(-3px);
+  }
 </style>
 </head>
 <body>
@@ -234,7 +252,7 @@
   </div>
 
   <a class="voltar" href="index.html">← Voltar ao Universo</a>
-
+  <a class="proxima" href="scrollReveal.html">Proxima pagina →</a>
 <script>
   function abrirCarta(n){
     // fecha todas antes
@@ -265,12 +283,6 @@
     }
   });
 
-  // tecla Esc fecha qualquer carta
-  document.addEventListener('keydown', (e)=>{
-    if(e.key === 'Escape'){
-      [1,2,3].forEach(i => fecharCarta(i));
-    }
-  });
 </script>
 </body>
 </html>
