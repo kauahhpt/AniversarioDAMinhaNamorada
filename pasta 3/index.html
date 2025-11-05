@@ -84,7 +84,7 @@ canvas{display:block}
 
   <div class="footer">
     <div style="font-size:13px">✨ Dica: movimente o mouse para explorar — toque para interagir</div>
-    <div style="font-size:13px">✨são 9 estrelas caso não apareçam as 9 recarregue a pagina</div>
+    <div style="font-size:13px">✨são 9 estrelas caso não apareçam as 9 recarregue a pagina, clique na estrela com cor diferente para ir para proxima página</div>
   </div>
 
   <div class="hint">Clique em uma estrela para abrir a lembrança</div>
@@ -100,13 +100,11 @@ const initialStars = [
   { id: 's-5', title: 'Nosso Primeiro Beijo', text: 'Nosso selinho no parque, tímido mas cheio de emoção, vai sempre ser o nosso momento.' },
   { id: 's-6', title: 'Nossos planos juntos', text: 'Sonhos compartilhados, risos e um futuro que quero construir ao seu lado.' },
   { id: 's-7', title: 'Você me apresentando a sua familia', text: 'Chegar perto da sua família foi tenso, mas no fim, só restou a sensação de estar em casa   ' },
-  { id: 's-8', title: 'Nossa primeira vez', text: 'O momento em que nossas almas se tocaram, e percebi que de fato você era pra toda vida.' },
-  // 🌟 ESTRELA ESPECIAL
-  { id: 'special-star', title: 'Um presente especial', text: 'Clique aqui, meu amor 💖' }
+  { id: 's-8', title: 'Nossa primeira vez', text: 'O momento em que nossas almas se tocaram, e percebi que de fato você era pra toda vida.' }
 ];
 
 const DEFAULT_PLANET_NAME = 'Beatriz';
-let savedStars = initialStars.slice();
+let savedStars = initialStars.slice(); // já garante que sempre usemos as 8 estrelas
 
 /* -------------------- THREE.JS SETUP -------------------- */
 const container = document.getElementById('canvas-wrap');
@@ -195,7 +193,7 @@ scene.add(starsGroup);
 
 /* -------------------- FUNÇÕES DE ESTRELA 3D -------------------- */
 function randomStarPos(){
-  const radius = THREE.MathUtils.randFloat(5, 14);
+  const radius = THREE.MathUtils.randFloat(5, 14); // mais afastadas
   const theta = Math.random() * Math.PI * 2;
   const phi = Math.random() * Math.PI - Math.PI/2;
   const x = radius * Math.cos(phi) * Math.cos(theta);
@@ -227,26 +225,23 @@ function createStarMesh(star){
 
   const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 });
   const mat = new THREE.MeshStandardMaterial({ color: 0xffffee, emissive: 0xffffcc, roughness: 0.3, metalness: 0.2 });
-
-  // destaque especial
-  if (star.id === 'special-star') {
-    mat.color.set(0xff66cc);
-    mat.emissive = new THREE.Color(0xff1493);
-    mat.emissiveIntensity = 1.2;
-  }
-
   const mesh = new THREE.Mesh(geo, mat);
+
   const scale = THREE.MathUtils.randFloat(0.7, 1.3);
   mesh.scale.set(scale, scale, scale);
+
   const [x,y,z] = randomStarPos();
   mesh.position.set(x,y,z);
+
   mesh.userData = { id: star.id, title: star.title, text: star.text };
   starsGroup.add(mesh);
   return mesh;
 }
 
 /* -------------------- CARREGAR ESTRELAS -------------------- */
-for(const s of savedStars){ createStarMesh(s); }
+for(const s of savedStars){
+  createStarMesh(s);
+}
 
 /* ---------- INTERAÇÃO, MODAL E UI ---------- */
 const raycaster = new THREE.Raycaster();
@@ -256,6 +251,7 @@ const modal = document.getElementById('modal');
 const modalTitle = document.getElementById('modal-title');
 const modalText = document.getElementById('modal-text');
 const modalMeta = document.getElementById('modal-meta');
+const speakBtn = document.getElementById('speakBtn');
 const closeModal = document.getElementById('closeModal');
 
 function openModal(star){
@@ -263,13 +259,6 @@ function openModal(star){
   modalText.textContent = star.userData.text;
   modalMeta.textContent = '💫 Memória';
   modal.classList.add('show');
-
-  // 🌟 redirecionamento especial
-  if (star.userData.id === 'special-star') {
-    setTimeout(() => {
-      window.location.href = 'presentes.html';
-    }, 1500);
-  }
 }
 
 function closeModalFn(){ modal.classList.remove('show'); }
@@ -300,26 +289,68 @@ document.addEventListener('mousemove', (event)=>{
 /* ---------- ANIMAÇÃO ---------- */
 function animate() {
     requestAnimationFrame(animate);
+
+    // Rotação do planeta com base no mouse
     planetGroup.rotation.y += 0.002 + (targetX - planetGroup.rotation.y) * 0.05;
     planetGroup.rotation.x += (targetY - planetGroup.rotation.x) * 0.05;
+
+    // Rotação geral da cena para efeito sutil
     scene.rotation.y += 0.0005;
+
+    // Efeito de brilho e opacidade nas estrelas
     const t = performance.now() * 0.001;
     for (const s of starsGroup.children) {
         const f = 0.9 + Math.sin(t * 2 + s.position.x * 0.3) * 0.12;
         s.material.emissiveIntensity = 0.22 * f;
+        if (s.children[0] && s.children[0].material) {
+            s.children[0].material.opacity = 0.6 + Math.abs(Math.sin(t * 2 + s.position.y)) * 0.4;
+        }
     }
+
+    // ---------- TELETRANSPORTE DAS PARTÍCULAS DE FUNDO ----------
+    const positionsArray = particlesGeo.attributes.position.array;  
+    const boundX = 50, boundY = 25, boundZ = 80; // limites do "universo"
+
+    for (let i = 0; i < particleCount; i++) {
+        let x = positionsArray[i * 3];
+        let y = positionsArray[i * 3 + 1];
+        let z = positionsArray[i * 3 + 2];
+
+        if (x > boundX) positionsArray[i * 3] = -boundX;
+        else if (x < -boundX) positionsArray[i * 3] = boundX;
+
+        if (y > boundY) positionsArray[i * 3 + 1] = -boundY;
+        else if (y < -boundY) positionsArray[i * 3 + 1] = boundY;
+
+        if (z > boundZ) positionsArray[i * 3 + 2] = -boundZ;
+        else if (z < -boundZ) positionsArray[i * 3 + 2] = boundZ;
+    }
+    particlesGeo.attributes.position.needsUpdate = true;
+
     renderer.render(scene, camera);
 }
 animate();
-</script>
 
+
+</script>
 <!-- Música de fundo -->
 <audio id="bg-music" src="musica.mp3" autoplay loop></audio>
+
 <script>
-const bgMusic = document.getElementById("bg-music");
-bgMusic.volume = 0.75;
-window.addEventListener('click', () => { if (bgMusic.paused) bgMusic.play().catch(()=>{}); });
-window.addEventListener('load', () => { bgMusic.play().catch(()=>{}); });
+  const bgMusic = document.getElementById("bg-music");
+  bgMusic.volume = 0.75; // controla o volume inicial (0.0 a 1.0)
+
+  // Em navegadores que bloqueiam autoplay, o som inicia após o primeiro clique
+  window.addEventListener('click', () => {
+    if (bgMusic.paused) {
+      bgMusic.play().catch(err => console.warn('Autoplay bloqueado:', err));
+    }
+  });
+
+  // Também tenta iniciar assim que a página estiver pronta
+  window.addEventListener('load', () => {
+    bgMusic.play().catch(() => {}); 
+  });
 </script>
 
 </body>
