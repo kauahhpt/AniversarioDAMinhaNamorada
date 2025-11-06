@@ -6,7 +6,13 @@
   <title>Nossas Memórias</title>
   <link rel="icon" type="image/png" href="icon.png">
 
+  <!-- Importa a fonte Just Love -->
   <style>
+    @font-face {
+      font-family: 'Just Love';
+      src: url('Just Love.ttf') format('truetype');
+    }
+
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
@@ -39,6 +45,28 @@
       line-height: 1.6;
       color: #f5f5f5;
     }
+
+    /* Frase final */
+    .final-message {
+      font-family: 'Just Love', cursive;
+      font-size: 3rem;
+      margin: 120px 20px 120px;
+      color: #ff99cc;
+      text-shadow: 0 0 12px rgba(255, 150, 200, 0.8);
+      opacity: 0.9;
+      animation: pulseGlow 3s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% {
+        text-shadow: 0 0 10px rgba(255, 150, 200, 0.8);
+        transform: scale(1);
+      }
+      50% {
+        text-shadow: 0 0 20px rgba(255, 180, 220, 1);
+        transform: scale(1.03);
+      }
+    }
   </style>
 </head>
 <body>
@@ -54,23 +82,27 @@
   <img src="foto3.jpg" class="photo" alt="nossa foto 3">
   <p>Cada instante ao teu lado é um pedacinho do paraíso.</p>
 
-   <img src="foto4.jpg" class="photo" alt="nossa foto 4">
-  <p>Cada instante ao teu lado é um pedacinho do paraíso.</p>
+  <img src="foto4.jpg" class="photo" alt="nossa foto 4">
+  <p>Seus olhos são a poesia mais linda que existe.</p>
 
   <img src="foto5.jpg" class="photo" alt="nossa foto 5">
-  <p>Cada instante ao teu lado é um pedacinho do paraíso.</p>
+  <p>Você mais linda que qualquer arte já vista.</p>
 
   <img src="foto6.jpg" class="photo" alt="nossa foto 6">
-  <p>Cada instante ao teu lado é um pedacinho do paraíso.</p>
+  <p>O teu abraço é o meu refúgio preferido.</p>
 
   <img src="foto7.jpg" class="photo" alt="nossa foto 7">
-  <p>Cada instante ao teu lado é um pedacinho do paraíso.</p>
+  <p>O tempo é o nosso maior inimigo quando estamos juntos.</p>
 
-  <img src="foto8.jpg" class="photo" alt="nossa foto 7">
-  <p>Cada instante ao teu lado é um pedacinho do paraíso.</p>
+  <img src="foto8.jpg" class="photo" alt="nossa foto 8">
+  <p>O seu abraço tem o formato exato do meu corpo.</p>
+
+  <!-- Frase final -->
+  <h3 class="final-message">Eu te amo de todo meu coração amor, feliz aniversário 💖</h3>
 
   <script src="https://unpkg.com/scrollreveal"></script>
   <script>
+    // Animação para as fotos
     ScrollReveal().reveal('.photo', {
       duration: 1200,
       origin: 'bottom',
@@ -79,6 +111,7 @@
       interval: 200
     });
 
+    // Animação para os textos
     ScrollReveal().reveal('p', {
       duration: 1500,
       origin: 'bottom',
@@ -87,7 +120,18 @@
       opacity: 0,
       interval: 200
     });
+
+    // Animação para a frase final
+    ScrollReveal().reveal('.final-message', {
+      duration: 2000,
+      origin: 'bottom',
+      distance: '80px',
+      opacity: 0,
+      delay: 400,
+      easing: 'ease-out'
+    });
   </script>
 
+  <script src="musica.js"></script>
 </body>
 </html>

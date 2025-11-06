@@ -314,13 +314,13 @@ animate();
 </script>
 
 <!-- Música de fundo -->
-<audio id="bg-music" src="musica.mp3" autoplay loop></audio>
 <script>
 const bgMusic = document.getElementById("bg-music");
 bgMusic.volume = 0.75;
 window.addEventListener('click', () => { if (bgMusic.paused) bgMusic.play().catch(()=>{}); });
 window.addEventListener('load', () => { bgMusic.play().catch(()=>{}); });
 </script>
+<script src="musica.js"></script>
 
 </body>
 </html>
